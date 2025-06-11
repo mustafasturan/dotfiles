@@ -36,6 +36,11 @@ for dir in */ ; do
 
   # Stow the package
   stow "$package"
+
+  if [ "$package" = "bin" ]; then
+    echo "⚙️ Setting executable permissions for scripts in ~/.local/bin"
+    find "$HOME/.local/bin" -type f -exec chmod +x {} +
+  fi
 done
 
 echo "✅ All dotfiles have been stowed!"
