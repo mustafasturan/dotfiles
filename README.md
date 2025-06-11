@@ -5,8 +5,9 @@ My Arch Linux dotfiles managed with [GNU Stow](https://www.gnu.org/software/stow
 ## Usage
 
 ```bash
-git clone https://github.com/yourusername/dotfiles.git ~/.dotfiles
+git clone https://github.com/mustafasturan/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
+chmod +x ~/.dotfiles/bootstrap.sh
 ./bootstrap.sh
 ```
 
@@ -16,6 +17,4 @@ cd ~/.dotfiles
 - Zsh + Powerlevel10k
 - Git
 - Neovim
-- Alacritty
-- i3 WM
 - Tmux
