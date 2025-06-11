@@ -7,30 +7,34 @@ BACKUP_DIR="$HOME/.dotfiles_backup"
 
 echo "🚀 Starting dotfiles installation..."
 
-# Create backup directory
-mkdir -p "$BACKUP_DIR"
-
 cd "$DOTFILES_DIR"
+
+backup_needed=false
 
 # Loop through each folder (each is a stow package)
 for dir in */ ; do
   package="${dir%/}"
-
   echo "🔗 Stowing $package..."
 
-  # Dry run to find conflicting files
+  # Find conflicting files that are not symlinks
   conflicts=$(stow -nv "$package" 2>&1 | grep -oE 'existing target is not a link: (.+)' | cut -d: -f2- | xargs)
 
-  # Backup conflicting files
+  # Backup if needed
   for file in $conflicts; do
-    if [ -e "$HOME/$file" ]; then
+    fullpath="$HOME/$file"
+    if [ -e "$fullpath" ]; then
+      if [ "$backup_needed" = false ]; then
+        echo "📁 Creating backup directory: $BACKUP_DIR"
+        mkdir -p "$BACKUP_DIR"
+        backup_needed=true
+      fi
       echo "📦 Backing up $file to $BACKUP_DIR"
       mkdir -p "$BACKUP_DIR/$(dirname "$file")"
-      mv "$HOME/$file" "$BACKUP_DIR/$file"
+      mv "$fullpath" "$BACKUP_DIR/$file"
     fi
   done
 
-  # Actually stow the package
+  # Stow the package
   stow "$package"
 done
 
