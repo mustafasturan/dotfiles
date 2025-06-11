@@ -80,6 +80,110 @@ else
     echo "✔️ JetBrains Nerd Font already installed, skipping."
 fi
 
+# Create wallpaper directory
+echo "==> Creating wallpaper directory..."
+if [[ ! -d "$HOME/Pictures/Wallpaper" ]]; then
+    mkdir -p "$HOME/Pictures/Wallpaper"
+    echo "📁 Created ~/Pictures/Wallpaper"
+else
+    echo "✔️ Wallpaper directory already exists, skipping."
+fi
+
+# Install yay if not already installed
+if ! command -v yay &>/dev/null; then
+    echo "==> Installing AUR package manager (yay)..."
+
+    # Ensure prerequisites
+    sudo pacman -S --needed --noconfirm git base-devel || {
+        echo "❌ Failed to install base-devel or git"; exit 1;
+    }
+
+    # Use temporary build directory
+    tmpdir=$(mktemp -d)
+    echo "📁 Cloning yay into $tmpdir"
+    git clone https://aur.archlinux.org/yay.git "$tmpdir/yay" || {
+        echo "❌ Failed to clone yay repo"; exit 1;
+    }
+
+    pushd "$tmpdir/yay" > /dev/null
+    makepkg -si --noconfirm || {
+        echo "❌ yay installation failed"; exit 1;
+    }
+    popd > /dev/null
+
+    rm -rf "$tmpdir"
+
+    echo "✅ yay installed successfully."
+else
+    echo "✔️ yay is already installed."
+fi
+
+# Install useful packages from AUR
+echo "==> Installing core packages with yay..."
+
+PACKAGES=(
+    pacseek
+    zoxide
+    fzf
+    unzip
+    zsh
+    starship
+    atuin
+    eza
+    acpi
+    playerctl
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+    zsh-history-substring-search
+)
+
+if yay -S --noconfirm --needed "${PACKAGES[@]}"; then
+    echo "✅ Core packages installed successfully."
+else
+    echo "❌ Failed to install some packages. Check the yay output above." >&2
+    exit 1
+fi
+
+# Install packages from official repos using pacman
+echo "==> Installing system packages with pacman..."
+
+PACMAN_PACKAGES=(
+    dunst
+    libnotify
+    waybar
+    wl-clipboard
+    xdg-desktop-portal-hyprland
+    xdg-desktop-portal
+    brightnessctl
+    pavucontrol
+    tmux
+    slurp
+    grim
+    hyprlock
+    pamixer
+)
+
+if sudo pacman -S --noconfirm --needed "${PACMAN_PACKAGES[@]}"; then
+    echo "✅ System packages installed successfully."
+else
+    echo "❌ Failed to install some system packages. Check the pacman output above." >&2
+    exit 1
+fi
+
+# Set zsh as default shell if not already
+if [[ "$SHELL" != "$(command -v zsh)" ]]; then
+    echo "==> Changing default shell to zsh..."
+    if chsh -s "$(command -v zsh)"; then
+        echo "✅ Default shell changed to zsh. Please log out and log back in for it to take effect."
+    else
+        echo "❌ Failed to change default shell to zsh." >&2
+        exit 1
+    fi
+else
+    echo "✔️ zsh is already the default shell."
+fi
+
+
 echo "🚀 Starting dotfiles installation..."
 
 cd "$DOTFILES_DIR"
