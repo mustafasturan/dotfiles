@@ -171,6 +171,7 @@ PACMAN_PACKAGES=(
     pamixer
     rofi
     sddm
+    stow
 )
 
 if sudo pacman -S --noconfirm --needed "${PACMAN_PACKAGES[@]}"; then
