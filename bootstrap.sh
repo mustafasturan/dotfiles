@@ -136,6 +136,10 @@ PACKAGES=(
     zsh-autosuggestions
     zsh-syntax-highlighting
     zsh-history-substring-search
+    bibata-cursor-theme
+    catppuccin-gtk-theme-mocha
+    kvantum-theme-catppuccin-git
+    catppuccin-sddm-theme
 )
 
 if yay -S --noconfirm --needed "${PACKAGES[@]}"; then
@@ -149,6 +153,7 @@ fi
 echo "==> Installing system packages with pacman..."
 
 PACMAN_PACKAGES=(
+    stow
     dunst
     libnotify
     waybar
@@ -171,6 +176,13 @@ PACMAN_PACKAGES=(
     pamixer
     rofi
     sddm
+    gtk3
+    gtk4
+    kvantum
+    qt5ct
+    qt6ct
+    adwaita-icon-theme
+    papirus-icon-theme
 )
 
 if sudo pacman -S --noconfirm --needed "${PACMAN_PACKAGES[@]}"; then
@@ -178,6 +190,75 @@ if sudo pacman -S --noconfirm --needed "${PACMAN_PACKAGES[@]}"; then
 else
     echo "❌ Failed to install some system packages. Check the pacman output above." >&2
     exit 1
+fi
+
+# Install NVIDIA Open Kernel Driver
+echo "==> Checking NVIDIA driver status ..."
+
+# Function to check if a package is installed
+is_package_installed() {
+    pacman -Q "$1" &>/dev/null
+}
+
+# Check if drivers are already installed
+if is_package_installed "nvidia-open-dkms" && lsmod | grep -q "nvidia"; then
+    echo "✔️ NVIDIA open kernel driver is already installed and loaded."
+else
+    echo "⬇️ Installing NVIDIA Open Kernel Driver (DKMS)..."
+    
+    NVIDIA_PACKAGES=(
+        nvidia-open-dkms     # Open kernel driver with DKMS support
+        nvidia-utils         # NVIDIA driver utilities
+        nvidia-settings      # NVIDIA settings GUI tool
+        lib32-nvidia-utils   # 32-bit support for NVIDIA drivers
+        egl-wayland          # EGL support for Wayland
+        libva-nvidia-driver  # VA-API support for NVIDIA
+    )
+
+    if sudo pacman -S --noconfirm --needed "${NVIDIA_PACKAGES[@]}"; then
+        echo "✅ NVIDIA drivers installed successfully."
+    else
+        echo "❌ Failed to install NVIDIA drivers. Check the pacman output above." >&2
+        exit 1
+    fi
+fi
+
+# Configure NVIDIA settings (even if drivers were already installed)
+echo "==> Configuring NVIDIA for Hyprland with Wayland..."
+
+# Create or update NVIDIA configuration for Hyprland
+NVIDIA_CONF="/etc/modprobe.d/nvidia.conf"
+if [[ ! -f "$NVIDIA_CONF" ]]; then
+    echo "Creating NVIDIA module configuration..."
+    echo "options nvidia-drm modeset=1" | sudo tee "$NVIDIA_CONF"
+    echo "options nvidia NVreg_PreserveVideoMemoryAllocations=1" | sudo tee -a "$NVIDIA_CONF"
+else
+    echo "✔️ NVIDIA kernel configuration already exists."
+fi
+
+# Add environment variables to profile.d for proper NVIDIA Wayland support
+NVIDIA_ENV="/etc/profile.d/nvidia-wayland.sh"
+if [[ ! -f "$NVIDIA_ENV" ]]; then
+    echo "Creating NVIDIA Wayland environment settings..."
+    cat << EOF | sudo tee "$NVIDIA_ENV"
+# NVIDIA Wayland environment variables
+export LIBVA_DRIVER_NAME=nvidia
+export GBM_BACKEND=nvidia-drm
+export __GLX_VENDOR_LIBRARY_NAME=nvidia
+export WLR_NO_HARDWARE_CURSORS=1
+export CUDA_CACHE_DISABLE=0
+export __GL_THREADED_OPTIMIZATIONS=1
+EOF
+    sudo chmod +x "$NVIDIA_ENV"
+else
+    echo "✔️ NVIDIA Wayland environment settings already exist."
+fi
+
+# Update initramfs only if we installed new drivers
+if ! is_package_installed "nvidia-open-dkms" || ! lsmod | grep -q "nvidia"; then
+    echo "Updating initramfs with NVIDIA modules..."
+    sudo mkinitcpio -P
+    echo "⚠️ A system reboot is recommended to activate the new NVIDIA drivers."
 fi
 
 # Set zsh as default shell if not already
@@ -260,3 +341,19 @@ for dir in */ ; do
 done
 
 echo "✅ All dotfiles have been stowed!"
+
+echo "==> Configuring SDDM ..."
+if [ -d "$DOTFILES_DIR/sddm" ]; then
+    # SDDM requires system-level configuration
+    for conf_file in "$DOTFILES_DIR"/sddm/etc/sddm.conf.d/*.conf; do
+        if [ -f "$conf_file" ]; then
+            filename=$(basename "$conf_file")
+            sudo mkdir -p /etc/sddm.conf.d
+            echo "📄 Installing SDDM config: $filename"
+            sudo cp "$conf_file" "/etc/sddm.conf.d/$filename"
+        fi
+    done
+    echo "✅ SDDM configuration installed."
+else
+    echo "⚠️ SDDM configuration not found in dotfiles."
+fi
