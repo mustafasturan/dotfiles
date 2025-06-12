@@ -46,7 +46,7 @@ if [[ ! -f "$FA_DIR/Font Awesome 6 Brands-Regular-400.otf" ]]; then
     rm -rf "fontawesome-free-$FA5_VER-desktop"*
 
     echo "🔄 Refreshing font cache..."
-    fc-cache -f "$FONT_DIR" || echo "⚠️ Could not refresh font cache. Is fontconfig installed?"
+    fc-cache -f -v || echo "⚠️ Could not refresh font cache. Is fontconfig installed?"
 
     echo "✅ Font Awesome v5 and v6 installed."
 else
@@ -73,7 +73,7 @@ if [[ ! -f "$JB_FONT_DIR/JetBrainsMono-Regular.ttf" ]]; then
     rm -rf "JetBrainsMono" "JetBrainsMono.zip"
 
     echo "🔄 Refreshing font cache..."
-    fc-cache -f "$FONT_DIR" || echo "⚠️ Font cache refresh failed. Is 'fontconfig' installed?"
+    fc-cache -f -v || echo "⚠️ Font cache refresh failed. Is 'fontconfig' installed?"
 
     echo "✅ JetBrains Nerd Font installed."
 else
@@ -193,13 +193,13 @@ processed_dirs=()
 
 # Loop through each folder (each is a stow package)
 for dir in */ ; do
-
+  package="${dir%/}"
+  
   # Skip non-stow directories
   if [[ "$package" == ".git" ]]; then
     continue
   fi
   
-  package="${dir%/}"
   echo "🔗 Stowing $package..."
 
   # Find conflicting files that are not symlinks
@@ -223,15 +223,22 @@ for dir in */ ; do
   # Stow the package
   stow "$package"
 
-  # Only chmod each top-level target once
-  for topdir in "$package"/*; do
-    [ -d "$topdir" ] || continue
+  # Recursively chmod +x all *.sh files in installed target dirs, including hidden folders like .config
+  for topdir in "$package"/* "$package"/.*; do
+    # Skip non-directories and special entries
+    [[ ! -d "$topdir" ]] && continue
+    [[ "$(basename "$topdir")" == "." || "$(basename "$topdir")" == ".." ]] && continue
+
+    # Corresponding target in $HOME
     target="$HOME/$(basename "$topdir")"
+
     if [[ ! " ${processed_dirs[*]} " =~ " $target " ]] && [ -d "$target" ]; then
+      echo "🔧 Setting executable permissions on scripts in $target"
       find "$target" -type f -name "*.sh" -exec chmod +x {} +
       processed_dirs+=("$target")
     fi
   done
+
 done
 
 echo "✅ All dotfiles have been stowed!"
