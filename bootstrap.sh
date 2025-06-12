@@ -189,9 +189,12 @@ echo "🚀 Starting dotfiles installation..."
 cd "$DOTFILES_DIR"
 
 backup_needed=false
+processed_dirs=()
 
 # Loop through each folder (each is a stow package)
 for dir in */ ; do
+  # Skip non-stow directories
+  [[ "$dir" =~ ^(\.git|bootstrap\.sh|README\.md)/$ ]] && continue
   package="${dir%/}"
   echo "🔗 Stowing $package..."
 
@@ -216,10 +219,15 @@ for dir in */ ; do
   # Stow the package
   stow "$package"
 
-  if [ "$package" = "bin" ]; then
-    echo "⚙️ Setting executable permissions for scripts in ~/.local/bin"
-    find "$HOME/.local/bin" -type f -exec chmod +x {} +
-  fi
+  # Only chmod each top-level target once
+  for topdir in "$package"/*; do
+    [ -d "$topdir" ] || continue
+    target="$HOME/$(basename "$topdir")"
+    if [[ ! " ${processed_dirs[*]} " =~ " $target " ]] && [ -d "$target" ]; then
+      find "$target" -type f -name "*.sh" -exec chmod +x {} +
+      processed_dirs+=("$target")
+    fi
+  done
 done
 
 echo "✅ All dotfiles have been stowed!"
