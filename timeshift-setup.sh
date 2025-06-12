@@ -148,4 +148,8 @@ install_timeshift
 configure_timeshift_json "$SNAPSHOT_DEVICE" "$detected_fs"
 enable_timeshift_service "$detected_fs"
 
+# Take an initial on-demand snapshot
+echo "Taking initial on-demand Timeshift snapshot..."
+sudo timeshift --create --comments "Initial snapshot from setup script" --tags O
+
 echo "Timeshift setup complete! You can manage snapshots with 'sudo timeshift'."
