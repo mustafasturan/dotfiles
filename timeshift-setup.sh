@@ -67,7 +67,7 @@ function configure_timeshift_json() {
   excludes_json=$(printf '"%s",' "${EXCLUDE_PATHS[@]}")
   excludes_json="[${excludes_json%,}]"
 
-  echo "Configuring /etc/timeshift.json with the following settings:"
+  echo "Configuring /etc/timeshift/timeshift.json with the following settings:"
   cat <<EOF
   Snapshot device: $snapshot_device
   Filesystem type: $fs_type
@@ -83,10 +83,10 @@ function configure_timeshift_json() {
 EOF
 
   if prompt_confirm "Proceed with this configuration?"; then
-    sudo tee /etc/timeshift.json > /dev/null <<EOF
+    sudo tee /etc/timeshift/timeshift.json > /dev/null <<EOF
 {
-  "backup_device_uuid": null,
-  "parent_device_uuid": null,
+  "backup_device_uuid": "",
+  "parent_device_uuid": "",
   "do_first_run": false,
   "btrfs_mode": $btrfs_mode,
   "schedule_monthly": $SCHEDULE_MONTHLY,
@@ -106,7 +106,7 @@ EOF
   "parent_device": "$snapshot_device"
 }
 EOF
-    echo "Configuration saved to /etc/timeshift.json"
+    echo "Configuration saved to /etc/timeshift/timeshift.json"
   else
     err "Configuration declined, exiting."
   fi
