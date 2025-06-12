@@ -192,6 +192,17 @@ else
     exit 1
 fi
 
+# Check and enable multilib repository if needed
+echo "==> Checking multilib repository..."
+if ! grep -q '^\[multilib\]' /etc/pacman.conf; then
+    echo "Enabling multilib repository..."
+    sudo sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+    sudo pacman -Sy
+    echo "✅ Multilib repository enabled."
+else
+    echo "✔️ Multilib repository is already enabled."
+fi
+
 # Install NVIDIA Open Kernel Driver
 echo "==> Checking NVIDIA driver status ..."
 
