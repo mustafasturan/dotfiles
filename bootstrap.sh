@@ -193,8 +193,12 @@ processed_dirs=()
 
 # Loop through each folder (each is a stow package)
 for dir in */ ; do
+
   # Skip non-stow directories
-  [[ "$dir" =~ ^(\.git|bootstrap\.sh|README\.md)/$ ]] && continue
+  if [[ "$package" == ".git" ]]; then
+    continue
+  fi
+  
   package="${dir%/}"
   echo "🔗 Stowing $package..."
 
