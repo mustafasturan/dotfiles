@@ -128,6 +128,15 @@ function enable_timeshift_service() {
 
 echo "Starting Timeshift setup..."
 
+# ===== Early check for existing Timeshift =====
+if command -v timeshift &>/dev/null; then
+  echo "Timeshift is already installed."
+  if prompt_confirm "Do you want to take an on-demand Timeshift snapshot now and exit?"; then
+    echo "Taking on-demand Timeshift snapshot..."
+    sudo timeshift --create --comments "On-demand snapshot from setup script" --tags O
+  fi
+fi
+
 detected_device=$(detect_root_partition)
 echo "Detected root partition: $detected_device"
 if prompt_confirm "Use detected device '$detected_device' for snapshots?"; then
@@ -147,9 +156,5 @@ fi
 install_timeshift
 configure_timeshift_json "$SNAPSHOT_DEVICE" "$detected_fs"
 enable_timeshift_service "$detected_fs"
-
-# Take an initial on-demand snapshot
-echo "Taking initial on-demand Timeshift snapshot..."
-sudo timeshift --create --comments "Initial snapshot from setup script" --tags O
 
 echo "Timeshift setup complete! You can manage snapshots with 'sudo timeshift'."

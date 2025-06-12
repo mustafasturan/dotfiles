@@ -159,8 +159,16 @@ PACMAN_PACKAGES=(
     tmux
     slurp
     grim
+    hyprland
     hyprlock
+    hypridle
+    hyprpaper
+    hyprpicker
+    kitty
+    qt5-wayland
+    qt6-wayland
     pamixer
+    rofi
 )
 
 if sudo pacman -S --noconfirm --needed "${PACMAN_PACKAGES[@]}"; then
