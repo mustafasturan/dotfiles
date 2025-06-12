@@ -306,7 +306,7 @@ for dir in */ ; do
   package="${dir%/}"
   
   # Skip non-stow directories
-  if [[ "$package" == ".git" ]]; then
+  if [[ "$package" == ".git" || "$package" == "sddm" ]]; then
     continue
   fi
   
