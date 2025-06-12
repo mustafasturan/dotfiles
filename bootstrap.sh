@@ -170,6 +170,7 @@ PACMAN_PACKAGES=(
     qt6-wayland
     pamixer
     rofi
+    sddm
 )
 
 if sudo pacman -S --noconfirm --needed "${PACMAN_PACKAGES[@]}"; then
@@ -192,6 +193,14 @@ else
     echo "✔️ zsh is already the default shell."
 fi
 
+# Enable SDDM if not already enabled
+if ! systemctl is-enabled sddm &>/dev/null; then
+    echo "==> Enabling SDDM display manager..."
+    sudo systemctl enable sddm
+    echo "✅ SDDM enabled."
+else
+    echo "✔️ SDDM is already enabled."
+fi
 
 echo "🚀 Starting dotfiles installation..."
 
