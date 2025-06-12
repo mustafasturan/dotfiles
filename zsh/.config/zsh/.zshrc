@@ -1,8 +1,7 @@
 #######################################
 # ENVIRONMENT VARIABLES & PATH SETUP
 #######################################
-export PATH="$HOME/.cargo/bin:$PATH"
-export STARSHIP_CONFIG=~/.config/starship/starship.toml
+export STARSHIP_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/starship/starship.toml"
 export EDITOR=/bin/nvim
 
 #######################################
@@ -28,11 +27,6 @@ zinit light zsh-users/zsh-history-substring-search
 # Oh My Zsh Plugin Snippets
 zinit snippet OMZP::git
 zinit snippet OMZP::sudo
-zinit snippet OMZP::aws
-zinit snippet OMZP::kubectl
-zinit snippet OMZP::kubectx
-zinit snippet OMZP::command-not-found
-zinit snippet OMZP::terraform
 
 #######################################
 # SHELL INTEGRATIONS
@@ -98,7 +92,7 @@ bindkey '^H' cd_up
 # Custom: Ctrl+L = interactive cd
 cd_menu() {
     local dir
-    dir=$(eza -1 --color=always --icons --group-directories-first | fzf --ansi --preview 'eza --tree --level=1 --icons --color=always {}')
+    dir=$(eza -1 -a --color=always --icons --group-directories-first | fzf --ansi --preview 'eza --tree --level=1 --icons --color=always {}')
     [[ -n "$dir" ]] && cd "$dir" && zle reset-prompt
 }
 zle -N cd_menu
@@ -126,7 +120,8 @@ alias ~='cd ~'
 # FUNCTIONS
 #######################################
 edit() {
-    vim ~/.config/$1
+    local file="$HOME/.config/$1"
+    [[ -f "$file" ]] && nvim "$file" || echo "File not found: $file"
 }
 
 cpcf() {
