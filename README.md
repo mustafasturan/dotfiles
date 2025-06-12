@@ -24,3 +24,14 @@ sudo timeshift --restore --snapshot '2023-06-13_12-00-01' --target / --clone
 
 # Or use the --yes flag to skip confirmations
 sudo timeshift --restore --snapshot '2023-06-13_12-00-01' --target / --clone --yes
+
+https://github.com/korvahannu/arch-nvidia-drivers-installation-guide
+
+ NVIDIA_PACKAGES=(
+        nvidia-open          # Open kernel driver with DKMS support
+        nvidia-utils         # NVIDIA driver utilities
+        nvidia-settings      # NVIDIA settings GUI tool
+        lib32-nvidia-utils   # 32-bit support for NVIDIA drivers
+        egl-wayland          # EGL support for Wayland
+        libva-nvidia-driver  # VA-API support for NVIDIA
+    )

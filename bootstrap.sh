@@ -192,48 +192,6 @@ else
     exit 1
 fi
 
-# Check and enable multilib repository if needed
-echo "==> Checking multilib repository..."
-if ! grep -q '^\[multilib\]' /etc/pacman.conf; then
-    echo "Enabling multilib repository..."
-    sudo sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
-    sudo pacman -Sy
-    echo "✅ Multilib repository enabled."
-else
-    echo "✔️ Multilib repository is already enabled."
-fi
-
-# Install NVIDIA Open Kernel Driver
-echo "==> Checking NVIDIA driver status ..."
-
-# Function to check if a package is installed
-is_package_installed() {
-    pacman -Q "$1" &>/dev/null
-}
-
-# Check if drivers are already installed
-if is_package_installed "nvidia-open" && lsmod | grep -q "nvidia"; then
-    echo "✔️ NVIDIA open kernel driver is already installed and loaded."
-else
-    echo "⬇️ Installing NVIDIA Open Kernel Driver (DKMS)..."
-    
-    NVIDIA_PACKAGES=(
-        nvidia-open          # Open kernel driver with DKMS support
-        nvidia-utils         # NVIDIA driver utilities
-        nvidia-settings      # NVIDIA settings GUI tool
-        lib32-nvidia-utils   # 32-bit support for NVIDIA drivers
-        egl-wayland          # EGL support for Wayland
-        libva-nvidia-driver  # VA-API support for NVIDIA
-    )
-
-    if sudo pacman -S --noconfirm --needed "${NVIDIA_PACKAGES[@]}"; then
-        echo "✅ NVIDIA drivers installed successfully."
-    else
-        echo "❌ Failed to install NVIDIA drivers. Check the pacman output above." >&2
-        exit 1
-    fi
-fi
-
 # Set zsh as default shell if not already
 if [[ "$(getent passwd "$USER" | cut -d: -f7)" != "$(command -v zsh)" ]]; then
     echo "==> Changing default shell to zsh..."
