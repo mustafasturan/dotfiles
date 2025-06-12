@@ -181,7 +181,7 @@ else
 fi
 
 # Set zsh as default shell if not already
-if [[ "$SHELL" != "$(command -v zsh)" ]]; then
+if [[ "$(getent passwd "$USER" | cut -d: -f7)" != "$(command -v zsh)" ]]; then
     echo "==> Changing default shell to zsh..."
     if chsh -s "$(command -v zsh)"; then
         echo "✅ Default shell changed to zsh. Please log out and log back in for it to take effect."
