@@ -312,8 +312,13 @@ for dir in */ ; do
   
   echo "🔗 Stowing $package..."
 
+  # Debug output
+  echo "Debug: Running stow dry run for $package"
+  stow -nv "$package" 2>&1 | tee /tmp/stow-debug-$package.log
+  echo "Debug: Dry run complete"
+
   # Find conflicting files that are not symlinks
-  conflicts=$(stow -nv "$package" 2>&1 | grep -oE 'existing target is not a link: (.+)' | cut -d: -f2- | xargs)
+  conflicts=$(stow -nv "$package" 2>&1 | grep -oE 'existing target is not a link: (.+)' | cut -d: -f2- | xargs) || true
 
   # Backup if needed
   for file in $conflicts; do
@@ -331,7 +336,9 @@ for dir in */ ; do
   done
 
   # Stow the package
+  echo "Debug: About to stow $package"
   stow "$package" || { echo "❌ Stow failed for $package"; exit 1; }
+  echo "Debug: Successfully stowed $package"
 
   # Recursively chmod +x all *.sh files in installed target dirs, including hidden folders like .config
   for topdir in "$package"/* "$package"/.*; do
