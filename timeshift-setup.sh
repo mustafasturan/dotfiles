@@ -131,7 +131,7 @@ echo "Starting Timeshift setup..."
 # ===== Early check for existing Timeshift =====
 if command -v timeshift &>/dev/null; then
   echo "Timeshift is already installed."
-  if prompt_confirm "Do you want to take an on-demand Timeshift snapshot now and exit?"; then
+  if prompt_confirm "Do you want to take an on-demand Timeshift snapshot now?"; then
     echo "Taking on-demand Timeshift snapshot..."
     sudo timeshift --create --comments "On-demand snapshot from setup script" --tags O
   fi
