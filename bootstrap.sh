@@ -212,13 +212,13 @@ is_package_installed() {
 }
 
 # Check if drivers are already installed
-if is_package_installed "nvidia-open-dkms" && lsmod | grep -q "nvidia"; then
+if is_package_installed "nvidia-open" && lsmod | grep -q "nvidia"; then
     echo "✔️ NVIDIA open kernel driver is already installed and loaded."
 else
     echo "⬇️ Installing NVIDIA Open Kernel Driver (DKMS)..."
     
     NVIDIA_PACKAGES=(
-        nvidia-open-dkms     # Open kernel driver with DKMS support
+        nvidia-open          # Open kernel driver with DKMS support
         nvidia-utils         # NVIDIA driver utilities
         nvidia-settings      # NVIDIA settings GUI tool
         lib32-nvidia-utils   # 32-bit support for NVIDIA drivers
@@ -233,127 +233,6 @@ else
         exit 1
     fi
 fi
-
-# Configure NVIDIA settings (even if drivers were already installed)
-echo "==> Configuring NVIDIA for Hyprland with Wayland..."
-
-# Create or update NVIDIA configuration for Hyprland
-NVIDIA_CONF="/etc/modprobe.d/nvidia.conf"
-if [[ ! -f "$NVIDIA_CONF" ]]; then
-    echo "Creating NVIDIA module configuration..."
-    echo "options nvidia-drm modeset=1" | sudo tee "$NVIDIA_CONF"
-    echo "options nvidia NVreg_PreserveVideoMemoryAllocations=1" | sudo tee -a "$NVIDIA_CONF"
-else
-    echo "✔️ NVIDIA kernel configuration already exists."
-fi
-
-# Add environment variables to profile.d for proper NVIDIA Wayland support
-NVIDIA_ENV="/etc/profile.d/nvidia-wayland.sh"
-if [[ ! -f "$NVIDIA_ENV" ]]; then
-    echo "Creating NVIDIA Wayland environment settings..."
-    cat << EOF | sudo tee "$NVIDIA_ENV"
-# NVIDIA Wayland environment variables
-export LIBVA_DRIVER_NAME=nvidia
-export GBM_BACKEND=nvidia-drm
-export __GLX_VENDOR_LIBRARY_NAME=nvidia
-export WLR_NO_HARDWARE_CURSORS=1
-export CUDA_CACHE_DISABLE=0
-export __GL_THREADED_OPTIMIZATIONS=1
-EOF
-    sudo chmod +x "$NVIDIA_ENV"
-else
-    echo "✔️ NVIDIA Wayland environment settings already exist."
-fi
-
-# Update initramfs only if we installed new drivers
-if ! is_package_installed "nvidia-open-dkms" || ! lsmod | grep -q "nvidia"; then
-    echo "Updating initramfs with NVIDIA modules..."
-    sudo mkinitcpio -P
-    echo "⚠️ A system reboot is recommended to activate the new NVIDIA drivers."
-fi
-
-# Add after the NVIDIA configuration section, before the ZSH section
-
-echo "==> Ensuring NVIDIA modules are properly loaded..."
-
-# 1. Add NVIDIA modules to mkinitcpio.conf
-echo "Adding NVIDIA modules to mkinitcpio.conf..."
-MKINITCPIO_CONF="/etc/mkinitcpio.conf"
-sudo cp "$MKINITCPIO_CONF" "$MKINITCPIO_CONF.backup"
-
-if grep -q "^MODULES=" "$MKINITCPIO_CONF"; then
-    if ! grep -q "^MODULES=.*nvidia" "$MKINITCPIO_CONF"; then
-        sudo sed -i 's/^MODULES=(/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm /' "$MKINITCPIO_CONF"
-    fi
-else
-    echo 'MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)' | sudo tee -a "$MKINITCPIO_CONF" > /dev/null
-fi
-
-# 2. Blacklist nouveau driver
-echo "Blacklisting nouveau driver..."
-BLACKLIST_CONF="/etc/modprobe.d/blacklist-nvidia-nouveau.conf"
-if [ ! -f "$BLACKLIST_CONF" ]; then
-    cat << EOF | sudo tee "$BLACKLIST_CONF" > /dev/null
-# Blacklist nouveau driver
-blacklist nouveau
-options nouveau modeset=0
-EOF
-fi
-
-# 3. Create a modprobe file to load modules in correct order
-echo "Creating modprobe configuration for NVIDIA..."
-MODPROBE_CONF="/etc/modprobe.d/nvidia-modules.conf"
-if [ ! -f "$MODPROBE_CONF" ]; then
-    cat << EOF | sudo tee "$MODPROBE_CONF" > /dev/null
-# Load NVIDIA modules in the correct order
-softdep nvidia post: nvidia_modeset nvidia_uvm nvidia_drm
-EOF
-fi
-
-# 4. Create systemd service to load NVIDIA modules at boot
-echo "Creating systemd service for NVIDIA modules..."
-NVIDIA_SERVICE="/etc/systemd/system/nvidia-load.service"
-cat << EOF | sudo tee "$NVIDIA_SERVICE" > /dev/null
-[Unit]
-Description=Load NVIDIA modules at boot
-After=syslog.target systemd-modules-load.service
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/modprobe nvidia
-ExecStart=/usr/bin/modprobe nvidia_modeset
-ExecStart=/usr/bin/modprobe nvidia_uvm
-ExecStart=/usr/bin/modprobe nvidia_drm modeset=1
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl enable nvidia-load.service
-
-# 5. Add special fix for Hyprland
-echo "Adding special fix for Hyprland with NVIDIA..."
-HYPRLAND_ENV="/etc/profile.d/hyprland-nvidia.sh"
-cat << EOF | sudo tee "$HYPRLAND_ENV" > /dev/null
-#!/bin/sh
-export LIBVA_DRIVER_NAME=nvidia
-export XDG_SESSION_TYPE=wayland
-export GBM_BACKEND=nvidia-drm
-export __GLX_VENDOR_LIBRARY_NAME=nvidia
-export WLR_NO_HARDWARE_CURSORS=1
-export XCURSOR_SIZE=24
-EOF
-sudo chmod +x "$HYPRLAND_ENV"
-
-# 6. Rebuild initramfs
-echo "Rebuilding initramfs with NVIDIA modules..."
-sudo mkinitcpio -P
-
-echo "✅ NVIDIA configuration complete."
-echo "⚠️ IMPORTANT: You MUST reboot your system now for the changes to take effect."
-echo "After rebooting, run 'lsmod | grep nvidia' to verify the modules are loaded."
-echo "You can also check 'nvidia-smi' to confirm the driver is working correctly."
 
 # Set zsh as default shell if not already
 if [[ "$(getent passwd "$USER" | cut -d: -f7)" != "$(command -v zsh)" ]]; then
