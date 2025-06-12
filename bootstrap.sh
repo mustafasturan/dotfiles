@@ -239,7 +239,7 @@ for dir in */ ; do
   done
 
   # Stow the package
-  stow "$package"
+  stow "$package" || { echo "❌ Stow failed for $package"; exit 1; }
 
   # Recursively chmod +x all *.sh files in installed target dirs, including hidden folders like .config
   for topdir in "$package"/* "$package"/.*; do
