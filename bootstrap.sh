@@ -59,7 +59,7 @@ JB_FONT_DIR="$FONT_DIR/JetBrainsMono"
 
 echo "==> Installing JetBrains Nerd Font..."
 
-if [[ ! -f "$JB_FONT_DIR/JetBrainsMono-Regular.ttf" ]]; then
+if [[ ! -f "$JB_FONT_DIR/JetBrainsMonoNerdFont-Regular.ttf" ]]; then
     mkdir -p "$JB_FONT_DIR"
 
     echo "⬇️ Downloading JetBrainsMono Nerd Font v$JB_FONT_VERSION..."
