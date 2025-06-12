@@ -130,6 +130,7 @@ PACKAGES=(
     starship
     atuin
     eza
+    bat
     acpi
     playerctl
     zsh-autosuggestions
