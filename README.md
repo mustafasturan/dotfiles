@@ -12,3 +12,15 @@ chmod +x ~/.dotfiles/bootstrap.sh
 ./timeshift.sh
 ./bootstrap.sh
 ```
+
+# First, modify the filter file for a one-time restore
+sudo nano /etc/timeshift/timeshift.json
+
+# Find the "exclude" section and remove or comment out home directory exclusions
+# Then save and exit
+
+# Perform the restore with the --clone flag which forces complete restoration
+sudo timeshift --restore --snapshot '2023-06-13_12-00-01' --target / --clone
+
+# Or use the --yes flag to skip confirmations
+sudo timeshift --restore --snapshot '2023-06-13_12-00-01' --target / --clone --yes
