@@ -33,7 +33,6 @@ zinit snippet OMZP::sudo
 #######################################
 eval "$(starship init zsh)"
 eval "$(zoxide init --cmd cd zsh)"
-eval "$(thefuck --alias)"
 eval "$(atuin init zsh)"
 
 #######################################

@@ -155,6 +155,10 @@ echo "==> Installing system packages with pacman..."
 PACMAN_PACKAGES=(
     stow
     dunst
+    cava
+    fastfetch
+    nvim
+    yazi
     libnotify
     waybar
     wl-clipboard
