@@ -12,6 +12,13 @@ chmod +x ~/.dotfiles/bootstrap.sh
 ./timeshift.sh
 ./bootstrap.sh
 ```
+Make user member of wheel group:
+usermod -aG wheel username
+
+EDITOR=nano visudo
+Edit sudoers file uncomment following line:
+
+# %wheel ALL=(ALL:ALL) ALL
 
 # First, modify the filter file for a one-time restore
 sudo nano /etc/timeshift/timeshift.json
